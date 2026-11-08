@@ -1,0 +1,38 @@
+name: Purge Git Commit History
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Automatically runs every Sunday at 00:00 UTC
+  workflow_dispatch: # Allows manual triggering from GitHub Actions tab
+
+jobs:
+  purge-history:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "Vault History Cleaner"
+          git config --global user.email "cleaner@local"
+
+      - name: Squash and Force Clean
+        run: |
+          # Create an orphan branch with no history
+          git checkout --orphan temp_clean_branch
+          
+          # Stage all current JSON files
+          git add .
+          
+          # Create a single baseline commit
+          git commit -m "Weekly repository optimization: purged commit history"
+          
+          # Overwrite local main branch
+          git branch -D main
+          git branch -m main
+          
+          # Force push back to GitHub
+          git push origin main --force
